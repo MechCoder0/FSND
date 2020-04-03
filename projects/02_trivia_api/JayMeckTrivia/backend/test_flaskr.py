@@ -38,6 +38,13 @@ class TriviaTestCase(unittest.TestCase):
             self.db.init_app(self.app)
             # create all tables
             self.db.create_all()
+
+        self.new_question = {
+            'question': 'new_question',
+            'answer': 'new_answer',
+            'category': 4,
+            'difficulty': 4
+        }
     
     def tearDown(self):
         """Executed after each test"""
@@ -65,9 +72,17 @@ class TriviaTestCase(unittest.TestCase):
     #     self.assertTrue(data['deleted'])
     #     self.assertTrue(data['total_questions'])
 
-    # def test_DELETE_trivia_question_fail(self):
-    #     data = check_basic_failure(self, '/questions/1000', 404, self.client().delete)
+    def test_DELETE_trivia_question_fail(self):
+        data = check_basic_failure(self, '/questions/1000', 404, self.client().delete)
 
+    def test_POST_trivia_questions(self):
+        res = self.client().post('/questions', json=self.new_question)
+        data = json.loads(res.data)
+        self.assertTrue(data['success'])
+        self.assertTrue(data['created'])
+
+    def test_POST_trivia_questions_fail(self):
+        check_basic_failure(self, '/questions', 400, self.client().post)
 
 
 # Make the tests conveniently executable

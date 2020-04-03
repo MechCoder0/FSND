@@ -41,7 +41,7 @@ def create_app(test_config=None):
   @app.route('/categories', methods=['GET'])
   def get_trivia_categories():
     categories = Category.query.all()
-    formatted_categories = [category.format() for category in categories]
+    formatted_categories = {cat.id:cat.type for cat in categories}
     return jsonify({
       'success': True,
       'categories':formatted_categories
@@ -61,13 +61,13 @@ def create_app(test_config=None):
   '''
   @app.route('/questions', methods=['GET'])
   def get_trivia_questions():
+    print('test')
     page=request.args.get('page',1, type=int)
     questions = Question.query.all()
     paginated_questions = paginate_items(questions, page)
-
+    print('test')
     if(len(paginated_questions)==0):
       abort(404)
-
     current_category = paginated_questions[1]['category']
     categories = Category.query.all()
     formatted_categories = {cat.id:cat.type for cat in categories}
@@ -81,20 +81,16 @@ def create_app(test_config=None):
 
 
   '''
-  @TODO: 
-  Create an endpoint to DELETE question using a question ID. 
-
-  TEST: When you click the trash icon next to a question, the question will be removed.
-  This removal will persist in the database and when you refresh the page. 
+  Deletes the question with the id passed. 
   '''
 
   @app.route('/questions/<int:question_id>', methods=['DELETE'])
   def delete_trivia_question(question_id):
-    try:
-      question = Question.query.filter(Question.id == question_id).one_or_none()
-      if(question is None):
-        abort(404)
+    question = Question.query.filter(Question.id == question_id).one_or_none()
+    if(question is None):
+      abort(404)
 
+    try:
       remaining_questions = Question.query.all()
       question.delete()
       return jsonify({
@@ -107,18 +103,42 @@ def create_app(test_config=None):
 
 
   '''
-  @TODO: 
-  Create an endpoint to POST a new question, 
-  which will require the question and answer text, 
-  category, and difficulty score.
-
-  TEST: When you submit a question on the "Add" tab, 
-  the form will clear and the question will appear at the end of the last page
-  of the questions list in the "List" tab.  
+  Creates a new question using the json body passed 
+  in the request. 
   '''
 
+  @app.route('/questions', methods=['POST'])
+  def add_trivia_question():
+    body = request.get_json()
+
+    if body is None:
+      abort(400)
+
+    try:
+      question = body.get('question', None)
+      answer = body.get('answer', None)
+      difficulty = body.get('difficulty', None)
+      category = body.get('category', None)
+    except:
+      abort(401)
+
+    try:
+      new_question = Question(question, answer, category, difficulty)
+      new_question.insert()
+
+      all_questions = Question.query.all()
+
+      return jsonify({
+        'success':True,
+        'created': new_question.id,
+        # 'questions': [question.format() for question in all_questions],
+        'total_questions': len(all_questions)
+      })
+    except:
+      abort(422)
+
   '''
-  @TODO: 
+  @TODO:
   Create a POST endpoint to get questions based on a search term. 
   It should return any questions for whom the search term 
   is a substring of the question. 
@@ -150,18 +170,12 @@ def create_app(test_config=None):
   and shown whether they were correct or not. 
   '''
 
-  '''
-  @TODO: 
-  Create error handlers for all expected errors 
-  including 404 and 422. 
-  '''
-
   @app.errorhandler(400)
-  def not_found(error):
+  def bad_request(error):
     return jsonify({
       "success": False,
       "error": 400,
-      "message": "No JSON Object"
+      "message": "Bad Request"
     }), 400
   
   @app.errorhandler(404)
@@ -171,6 +185,14 @@ def create_app(test_config=None):
       "error": 404,
       "message": 'Not found'
     }), 404
+
+  @app.errorhandler(422)
+  def unprocessable_entity(error):
+    return jsonify({
+      "success":False,
+      "error": 422,
+      "message": 'Unprocessable Entity'
+    }), 422
   
   return app
 
