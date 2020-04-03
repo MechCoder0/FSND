@@ -7,16 +7,15 @@ from flaskr import create_app
 from models import setup_db, Question, Category
 
 def check_basic_success(self, url, http_method):
-    res = http_method(url)
-    data = json.loads(res.data)
-    self.assertTrue(data['success'])
-    self.assertEqual(res.status_code,200)
-    return data
+    return basic_check(self, url, http_method, self.assertTrue)
 
 def check_basic_failure(self, url, code, http_method):
+    return basic_check(self, url, http_method, self.assertFalse, code)
+
+def basic_check(self, url, http_method, assert_method, code=200):
     res = http_method(url)
     data = json.loads(res.data)
-    self.assertFalse(data['success'])
+    assert_method(data['success'])
     self.assertEqual(res.status_code, code)
     return data
 
@@ -50,10 +49,6 @@ class TriviaTestCase(unittest.TestCase):
         """Executed after each test"""
         pass
 
-    """
-    TODO
-    Write at least one test for each test for successful operation and for expected errors.
-    """
     def test_GET_trivia_questions(self):
         data = check_basic_success(self, '/questions', self.client().get)
         self.assertTrue(data['questions'])
@@ -84,6 +79,18 @@ class TriviaTestCase(unittest.TestCase):
     def test_POST_trivia_questions_fail(self):
         check_basic_failure(self, '/questions', 400, self.client().post)
 
+    def test_POST_search_question(self):
+        res = self.client().post('/questions/search', json={'searchTerm':'question'})
+        data = json.loads(res.data)
+        self.assertTrue(data['success'])
+        self.assertTrue(data['questions'])
+
+    def test_GET_questions_by_category(self):
+        data = check_basic_success(self, 'categories/1/questions', self.client().get)
+        self.assertEqual(1, data['current_category'])
+
+    def test_GET_questions_by_category_fail(self):
+        check_basic_failure(self, 'categories/1000/questions', 404, self.client().get)
 
 # Make the tests conveniently executable
 if __name__ == "__main__":

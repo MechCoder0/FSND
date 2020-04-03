@@ -21,11 +21,7 @@ def create_app(test_config=None):
     return formatted_items[start:end]
 
   '''
-  @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
-  '''
-
-  '''
-  @TODO: Use the after_request decorator to set Access-Control-Allow
+  The after_request decorator to set Access-Control-Allow
   '''
   @app.after_request
   def after_request(response):
@@ -34,8 +30,7 @@ def create_app(test_config=None):
     return response
 
   '''
-  @TODO: 
-  Create an endpoint to handle GET requests 
+  An endpoint to handle GET requests 
   for all available categories.
   '''
   @app.route('/categories', methods=['GET'])
@@ -48,24 +43,16 @@ def create_app(test_config=None):
     })
 
   '''
-  @TODO: 
-  Create an endpoint to handle GET requests for questions, 
+  An endpoint to handle GET requests for questions, 
   including pagination (every 10 questions). 
-  This endpoint should return a list of questions, 
+  This endpoint should returns a list of questions, 
   number of total questions, current category, categories. 
-
-  TEST: At this point, when you start the application
-  you should see questions and categories generated,
-  ten questions per page and pagination at the bottom of the screen for three pages.
-  Clicking on the page numbers should update the questions. 
   '''
   @app.route('/questions', methods=['GET'])
   def get_trivia_questions():
-    print('test')
     page=request.args.get('page',1, type=int)
     questions = Question.query.all()
     paginated_questions = paginate_items(questions, page)
-    print('test')
     if(len(paginated_questions)==0):
       abort(404)
     current_category = paginated_questions[1]['category']
@@ -138,25 +125,55 @@ def create_app(test_config=None):
       abort(422)
 
   '''
-  @TODO:
-  Create a POST endpoint to get questions based on a search term. 
-  It should return any questions for whom the search term 
+  A POST endpoint to get questions based on a search term. 
+  It will return any questions for whom the search term 
   is a substring of the question. 
 
-  TEST: Search by any phrase. The questions list will update to include 
+  Search by any phrase. The questions list will update to include 
   only question that include that string within their question. 
-  Try using the word "title" to start. 
   '''
 
-  '''
-  @TODO: 
-  Create a GET endpoint to get questions based on category. 
+  @app.route('/questions/search', methods=['POST'])
+  def search_questions():
+    body = request.get_json()
+    if body is None:
+      abort(400)
 
-  TEST: In the "List" tab / main screen, clicking on one of the 
+    search_term = body.get('searchTerm')
+    questions = Question.query.filter(Question.question.ilike('%'+search_term+'%')).all()
+    paginated_questions = paginate_items(questions, 1)
+    
+    if(len(paginated_questions) == 0):
+      abort(404)
+
+    return jsonify({
+      'success': True,
+      'questions': paginated_questions,
+      'total_questions': len(questions),
+      'current_category': paginated_questions[0]['category']
+    })
+
+  '''
+  A GET endpoint to get questions based on category. 
+
+  In the "List" tab / main screen, clicking on one of the 
   categories in the left column will cause only questions of that 
   category to be shown. 
   '''
+  @app.route('/categories/<int:category_id>/questions', methods=['GET'])
+  def get_questions_for_category(category_id):
+    questions = Question.query.filter(Question.category == category_id).all()
+    if(questions is None or len(questions) == 0):
+      abort(404)
 
+    paginated_questions = paginate_items(questions, 1)
+
+    return jsonify({
+      'success': True,
+      'questions':paginated_questions,
+      'total_questions':len(paginated_questions),
+      'current_category':paginated_questions[0]['category']
+    })
 
   '''
   @TODO: 
