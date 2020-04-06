@@ -61,11 +61,11 @@ class TriviaTestCase(unittest.TestCase):
     def test_GET_trivia_questions_fail(self):
         data = check_basic_failure(self, '/questions?page=1000', 404, self.client().get)
 
-    # def test_DELETE_trivia_question_success(self):
-    #     # If testing this multiple times, change the id it deletes.
-    #     data = check_basic_success(self, '/questions/5', self.client().delete)
-    #     self.assertTrue(data['deleted'])
-    #     self.assertTrue(data['total_questions'])
+    def test_DELETE_trivia_question_success(self):
+        # If testing this multiple times, change the id it deletes.
+        data = check_basic_success(self, '/questions/1', self.client().delete)
+        self.assertTrue(data['deleted'])
+        self.assertTrue(data['total_questions'])
 
     def test_DELETE_trivia_question_fail(self):
         data = check_basic_failure(self, '/questions/1000', 404, self.client().delete)
@@ -91,6 +91,19 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_GET_questions_by_category_fail(self):
         check_basic_failure(self, 'categories/1000/questions', 404, self.client().get)
+
+    def test_POST_question_for_quiz(self):
+        res = self.client().post('/quizzes', json={'previous_questions':[], 'quiz_category':{'id':1}})
+        data = json.loads(res.data)
+        self.assertTrue(data['success'])
+
+    def test_POST_question_for_quiz(self):
+        res = self.client().post('/quizzes', json={'previous_questions':[], 'quiz_category':{'id':0}})
+        data = json.loads(res.data)
+        self.assertTrue(data['success'])
+
+    def test_POST_question_for_quiz_fail(self):
+        check_basic_failure(self,'/quizzes', 400, self.client().post)
 
 # Make the tests conveniently executable
 if __name__ == "__main__":

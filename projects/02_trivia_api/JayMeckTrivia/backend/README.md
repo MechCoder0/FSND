@@ -70,11 +70,13 @@ REVIEW_COMMENT
 ```
 This README is missing documentation of your endpoints. Below is an example for your endpoint to get all categories. Please use it as a reference for creating your documentation and resubmit your code. 
 
+All endpoints return Json Objects. 
+
 Endpoints
 GET '/categories'
-GET ...
-POST ...
-DELETE ...
+GET '/questions'
+POST '/questions'
+DELETE '/questions/{question_id}'
 
 GET '/categories'
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
@@ -88,7 +90,62 @@ GET '/categories'
 '6' : "Sports"}
 
 ```
+GET '/questions'
+ - Fetches a dictionary of questions, paginated to 10 per page. The page returned is based off of the page request argument.  
+ - Request Arguments: page - the page of questions. 
+ - URL example: /questions?page=1
+ - Returns: A list of questions, number of total questions, current category, categories. 
+ {
+    'success': True,
+    'total_questions': "10",
+    'questions': [
+        {
+            'id':1, 
+            'question':"What is the heaviest organ?",
+            'answer':"The liver",
+            'category' :1,
+            'difficulty':1 
+        },
+        {
+            'id':2, 
+            'question':"What state is Pittsburgh in?",
+            'answer':"Pennsylvania",
+            'category' :2,
+            'difficulty':1 },
+        }
+    ],
+    'categories': [{'1':"Science", '2':"History"}],
+    'current_category': 1
+}
 
+```
+DELETE '/questions/{question_id}
+- Deletes the question with the passed id
+- Request arguments: none
+- Returns the deleted question ID and the amount of 
+questions remaining.
+{
+    success:true,
+    deleted:1,
+    total_questions:10
+}
+
+```
+POST '/questions'
+- Creates a new question using the json body passed 
+  in the request. 
+- Request arguments: a JSON object with the question (String), answer (String), 
+difficulty (int), and category (int):
+{
+    question:"What color is the sky",
+    answer:"Blue",
+    difficulty:1,
+    category:2
+}
+-Returns the id of the created question and the number of total questions.
+{
+    'sucess' 
+}
 
 ## Testing
 To run the tests, run

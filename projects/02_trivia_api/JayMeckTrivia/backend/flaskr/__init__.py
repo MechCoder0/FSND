@@ -14,6 +14,12 @@ def create_app(test_config=None):
   setup_db(app)
   CORS(app)
 
+  def get_body(request):
+    body = request.get_json()
+    if body is None:
+      abort(400)
+    return body
+
   def paginate_items(items, page):
     start = (page - 1) * ITEMS_PER_PAGE
     end = start + ITEMS_PER_PAGE
@@ -45,7 +51,7 @@ def create_app(test_config=None):
   '''
   An endpoint to handle GET requests for questions, 
   including pagination (every 10 questions). 
-  This endpoint should returns a list of questions, 
+  This endpoint returns a list of questions, 
   number of total questions, current category, categories. 
   '''
   @app.route('/questions', methods=['GET'])
@@ -68,7 +74,7 @@ def create_app(test_config=None):
 
 
   '''
-  Deletes the question with the id passed. 
+  Deletes the question that maps to the id passed. 
   '''
 
   @app.route('/questions/<int:question_id>', methods=['DELETE'])
@@ -96,11 +102,7 @@ def create_app(test_config=None):
 
   @app.route('/questions', methods=['POST'])
   def add_trivia_question():
-    body = request.get_json()
-
-    if body is None:
-      abort(400)
-
+    body = get_body(request)
     try:
       question = body.get('question', None)
       answer = body.get('answer', None)
@@ -135,9 +137,7 @@ def create_app(test_config=None):
 
   @app.route('/questions/search', methods=['POST'])
   def search_questions():
-    body = request.get_json()
-    if body is None:
-      abort(400)
+    body = get_body(request)
 
     search_term = body.get('searchTerm')
     questions = Question.query.filter(Question.question.ilike('%'+search_term+'%')).all()
@@ -176,40 +176,50 @@ def create_app(test_config=None):
     })
 
   '''
-  @TODO: 
-  Create a POST endpoint to get questions to play the quiz. 
-  This endpoint should take category and previous question parameters 
+  A POST endpoint to get questions to play the quiz. 
+  This endpoint will take category and previous question parameters 
   and return a random questions within the given category, 
   if provided, and that is not one of the previous questions. 
 
-  TEST: In the "Play" tab, after a user selects "All" or a category,
+  The "Play" tab, after a user selects "All" or a category,
   one question at a time is displayed, the user is allowed to answer
   and shown whether they were correct or not. 
   '''
+  @app.route("/quizzes", methods=['POST'])
+  def get_quizzes():
+    body = get_body(request)
+
+    previous_questions = body.get('previous_questions', None)
+    quiz_category = body.get('quiz_category', None)
+    query = Question.query
+    if(quiz_category is not None and quiz_category['id'] is not 0):
+      query = query.filter(Question.category == quiz_category['id'])
+    questions = query.filter(Question.id.notin_(previous_questions)).all()
+    random_question = random.choice(questions)
+
+    return jsonify({
+      'success': True,
+      'question': random_question.format()
+    })
 
   @app.errorhandler(400)
   def bad_request(error):
-    return jsonify({
-      "success": False,
-      "error": 400,
-      "message": "Bad Request"
-    }), 400
+    return handle_error(400, 'Bad request')
   
   @app.errorhandler(404)
   def not_found(error):
-    return jsonify({
-      "success":False,
-      "error": 404,
-      "message": 'Not found'
-    }), 404
+    return handle_error(404, 'Not found')
 
   @app.errorhandler(422)
   def unprocessable_entity(error):
+    return handle_error(422, 'Unprocessable entity') 
+
+  def handle_error(code, message):
     return jsonify({
-      "success":False,
-      "error": 422,
-      "message": 'Unprocessable Entity'
-    }), 422
+      'success':False,
+      'error': code,
+      'message': message
+    }), code
   
   return app
 
