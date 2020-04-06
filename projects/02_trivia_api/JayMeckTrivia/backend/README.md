@@ -75,7 +75,10 @@ All endpoints return Json Objects.
 Endpoints
 GET '/categories'
 GET '/questions'
+GET '/categories/{category_id}/questions
 POST '/questions'
+POST '/questions/search'
+POST '/quizzes'
 DELETE '/questions/{question_id}'
 
 GET '/categories'
@@ -96,26 +99,26 @@ GET '/questions'
  - URL example: /questions?page=1
  - Returns: A list of questions, number of total questions, current category, categories. 
  {
-    'success': True,
-    'total_questions': "10",
-    'questions': [
+    success: true,
+    total_questions: "10",
+    questions: [
         {
-            'id':1, 
-            'question':"What is the heaviest organ?",
-            'answer':"The liver",
-            'category' :1,
-            'difficulty':1 
+            id: 3, 
+            question:"What is the heaviest organ?",
+            answer:"The liver",
+            category :1,
+            difficulty:1 
         },
         {
-            'id':2, 
-            'question':"What state is Pittsburgh in?",
-            'answer':"Pennsylvania",
-            'category' :2,
-            'difficulty':1 },
+            id: 2, 
+            question :"What state is Pittsburgh in?",
+            answer:"Pennsylvania",
+            category :2,
+            difficulty':1 },
         }
     ],
-    'categories': [{'1':"Science", '2':"History"}],
-    'current_category': 1
+    categories: [{'1':"Science", '2':"History"}],
+    current_category: 1
 }
 
 ```
@@ -144,8 +147,74 @@ difficulty (int), and category (int):
 }
 -Returns the id of the created question and the number of total questions.
 {
-    'sucess' 
+    success: true,
+    created: 1,
+    total_questions: 10
 }
+
+```
+POST '/questions/search'
+- searches the questions via a passed phrase. Search returns any question whose question contains the the phrase passed. The case of the phrase doesn't matter. 
+- Request arguments: A JSON object containing the phrase (String) to search by:
+{
+    searchTerm: "color"
+}
+- Returns the questions that match, the total number of questions which have the passed phrase, and the current category, which is based off of the question that best matches the passed phrase:
+{
+    success :true, 
+    questions : [
+        {
+            id:1,
+            question:"What color is the sky",
+            answer:"Blue", 
+            difficulty:1,
+            category:2
+        }
+    ],
+    total_questions: 1,
+    current_category: 2
+}
+
+```
+GET '/categories/{category_id}/questions'
+- Gets all the questions of the past caregory.
+- Request arguments: the category id
+- Returns all the questions of the given category, the total number of questions in the category, and the current category:
+{
+    success:true,
+    questions:[
+        {
+            id: 1,
+            question:"What color is the sky",
+            answer:"Blue", 
+            difficulty:1,
+            category:2
+        }
+    ],
+    total_questions: 1,
+    current_category:2
+}  
+
+```
+POST '/quizzes'
+- Get a random question that is not in the list of questions passed. This request can also be limited to a certain category.
+- Request arguments: the past questions (array of ints, optional) and a quiz category(int, optional):
+{
+    previous_questions:[2,3],
+    quiz_category: 2
+} 
+- Returns a random question in the passed category if a category is given. If a category is not given, it returns a random question in a random category. If the passed questions are given in the request, the returned question will not be one of them:
+{
+    success:true,
+    question:{
+        id: 1,
+        question:"What color is the sky",
+        answer:"Blue", 
+        difficulty:1,
+        category:2
+    }
+}  
+
 
 ## Testing
 To run the tests, run
